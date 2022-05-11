@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+import requests
+
+url = "https://api-nba-v1.p.rapidapi.com/games/teamId/29"
+
+headers = {
+    'x-rapidapi-host': "api-nba-v1.p.rapidapi.com",
+    'x-rapidapi-key': "25495a699amsh87ba522b0e7bd6dp1c4067jsnc4c8ebff8d81"
+    }
+
+response = requests.request("GET", url, headers=headers)
+response_data = response.json()
+
+for game in response_data["api"]["games"]:
+    if game["statusGame"] == "Finished":
+        latest_game = game
+
+if int(latest_game["hTeam"]["teamId"]) == 29:
+    por_home = True
+else:
+    por_home = False
+
+if por_home:
+    por_points = int(latest_game["hTeam"]["score"]["points"])
+    opp_points = int(latest_game["vTeam"]["score"]["points"])
+else:
+    por_points = int(latest_game["vTeam"]["score"]["points"])
+    opp_points = int(latest_game["hTeam"]["score"]["points"])
+
+print(f"{latest_game['vTeam']['shortName']} at {latest_game['hTeam']['shortName']}, {latest_game['startTimeUTC']} UTC")
+
+if por_points - opp_points >= -10:
+    print("Watch this game")
+else:
+    print(f"Don't bother, they lost {por_points}-{opp_points}")
