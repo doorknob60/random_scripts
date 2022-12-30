@@ -89,7 +89,7 @@ else:
 
 print(f"{latest_game['teams']['visitors']['nickname']} at {latest_game['teams']['home']['nickname']}, {latest_game['date']['start'][:-14]}")
 
-if wiz_points - opp_points >= 98:
+if wiz_points - opp_points >= -8:
     print(f"{new_line}Watch this game, the Wiz tried.")
 else:
     print(f"{new_line}Don't bother, the Wizards lost {wiz_points}-{opp_points}.{new_line}")
