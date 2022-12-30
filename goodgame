@@ -1,39 +1,97 @@
 #!/usr/bin/env python3
 import requests
-from datetime import datetime
 
-url = "https://api-nba-v1.p.rapidapi.com/games/"
+# request game data for main part of script. 
+# User must request rapidapi key from: https://rapidapi.com/api-sports/api/api-nba
+url_1 = "https://api-nba-v1.p.rapidapi.com/games/"
 
-querystring_1 = {"league":"standard", "season":"2022","team":29}
+querystring_1 = {"league":"standard", "season":"2022","team":41}
 
 headers = {
-    'x-rapidapi-host': "api-nba-v1.p.rapidapi.com",
-    'x-rapidapi-key': "25495a699amsh87ba522b0e7bd6dp1c4067jsnc4c8ebff8d81"
+    'X-RapidAPI-Key': "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    'X-RapidAPI-Host': "api-nba-v1.p.rapidapi.com"
 }
 
-response = requests.request("GET", url, headers=headers, params=querystring_1)
-response_data = response.json()
+game_response = requests.request('GET', url_1, headers=headers, params=querystring_1)
 
-latest_game = ""
-for game in response_data["response"]:
-    if game["status"]["long"] == "Finished":
+game_data = game_response.json()
+
+
+# request standings data for sad trombone whomp
+url_2 = "https://api-nba-v1.p.rapidapi.com/standings"
+
+querystring_2 = {'league':'standard','season':'2022','conference':'east'}
+
+standing_response = requests.request('GET', url_2, headers=headers, params=querystring_2)
+
+standing_response_data = standing_response.json()
+
+standing_response_data = standing_response_data['response']
+
+# extract standings data
+ecf_standing = ''
+wins = ''
+losses = ''
+pct = ''
+games_back = ''
+
+for team in standing_response_data:
+    if team['team']['id'] == 41:
+        ecf_standing = team['conference']['rank']
+        wins = team['win']['total']
+        losses = team['loss']['total']
+        pct = team['win']['percentage']
+        games_back = team['gamesBehind']
+
+
+# extract data for next game if they lost
+next_game = ''
+next_date = ''
+next_time = ''
+next_opp = ''
+
+for game in reversed(game_data['response']):
+    if game['status']['long'] == 'Scheduled':
+        next_game = game
+        next_date = game['date']['start'][:-14]
+        next_time = game['date']['start'][10:16]
+
+if next_game['teams']['home']['id'] == 41:
+    wiz_home = True
+else:
+    wiz_home = False
+
+if wiz_home:
+    next_opp = next_game['teams']['visitors']['nickname']
+else:
+    next_opp = next_game['teams']['home']['nickname']
+
+
+# ectract latest game data, print function
+latest_game = ''
+new_line = '\n'
+
+for game in game_data['response']:
+    if game['status']['long'] == 'Finished':
         latest_game = game
 
-if latest_game["teams"]["home"]["id"] == 29:
-    por_home = True
+if latest_game['teams']['home']['id'] == 41:
+    wiz_home = True
 else:
-    por_home = False
+    wiz_home = False
 
-if por_home:
-    por_points = int(latest_game["scores"]["home"]["points"])
-    opp_points = int(latest_game["scores"]["visitors"]["points"])
+if wiz_home:
+    wiz_points = int(latest_game['scores']['home']['points'])
+    opp_points = int(latest_game['scores']['visitors']['points'])
 else:
-    por_points = int(latest_game["scores"]["visitors"]["points"])
-    opp_points = int(latest_game["scores"]["home"]["points"])
+    wiz_points = int(latest_game['scores']['visitors']['points'])
+    opp_points = int(latest_game['scores']['home']['points'])
 
-print(f"{latest_game['teams']['visitors']['nickname']} at {latest_game['teams']['home']['nickname']}, {latest_game['date']['start']} UTC")
+print(f"{latest_game['teams']['visitors']['nickname']} at {latest_game['teams']['home']['nickname']}, {latest_game['date']['start'][:-14]}")
 
-if por_points - opp_points >= -10:
-    print("Watch this game")
+if wiz_points - opp_points >= 98:
+    print(f"{new_line}Watch this game, the Wiz tried.")
 else:
-    print(f"Don't bother, they lost {por_points}-{opp_points}")
+    print(f"{new_line}Don't bother, the Wizards lost {wiz_points}-{opp_points}.{new_line}")
+    print(f"Sitting at {ecf_standing} in the East, {games_back} games out. {new_line} {wins} wins and {losses} losses for {pct}. {new_line}{new_line}Whomp.")
+    print(f"{new_line}{new_line}There's always the next game against {next_opp} on {next_date}.{new_line}Starts {next_time} UTC.")
