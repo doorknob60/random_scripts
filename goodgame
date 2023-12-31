@@ -66,14 +66,20 @@ if wiz_home:
 else:
     next_opp = next_game['teams']['home']['nickname']
 
-
-# ectract latest game data, print function
+# extract latest game data, print function
 latest_game = ''
 new_line = '\n'
 
+from datetime import datetime
+today_date = datetime.today().strftime('%Y-%m-%d')
+
+# api no longer positions most recet game as last item in json
+# breaking loop on most recent date, too bad at indexing to figure out the clean way
 for game in game_data['response']:
     if game['status']['long'] == 'Finished':
         latest_game = game
+    if game['date']['start'][:-14] == today_date:
+        break
 
 if latest_game['teams']['home']['id'] == 41:
     wiz_home = True
